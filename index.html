@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>KWETU CONTROL V4</title>
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KwetuControl">
+    
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkt3ZXR1IENvbnRyb2wgVjQiLAogICJzaG9ydF9uYW1lIjogIkt3ZXR1IiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmNGY3ZjYiLAogICJ0aGVtZV9jb2xvciI6ICIjMmMzZTUwIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9pbWcuaWNvbnM4LmNvbS9mbHVlbnQvMTkyLzAwMDAwMC9zaGllbGQtY29uZmlndXJhdGlvbi5wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIKICAgIH0KICBdCn0=">
+
+    <style>
+        :root { --p: #2c3e50; --s: #27ae60; --d: #e74c3c; --bg: #f4f7f6; --card: #fff; --txt: #333; }
+        .dark { --bg: #1a1a1a; --card: #2c2c2c; --txt: #f4f7f6; --p: #000; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--txt); padding-bottom: 85px; transition: 0.3s; -webkit-tap-highlight-color: transparent; }
+        .header { background: var(--p); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .container { padding: 15px; }
+        .card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-box { padding: 15px; border-radius: 10px; color: white; text-align: center; }
+        .bg-s { background: var(--s); } .bg-d { background: var(--d); }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; outline: none; }
+        button { background: var(--s); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-logout { background: var(--d); width: auto; padding: 5px 10px; font-size: 12px; margin: 0; border-radius: 5px; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; border-top: 1px solid #ddd; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { flex: 1; padding: 12px; text-align: center; font-size: 10px; color: gray; cursor: pointer; }
+        .active { color: var(--s); font-weight: bold; border-top: 3px solid var(--s); }
+        .annonce-msg { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #ffeeba; font-size: 13px; }
+        .hidden { display: none !important; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 15px 0; }
+        .footer-tech { text-align: center; font-size: 10px; color: gray; margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body id="app-body">
+
+    <div id="pg-login" class="container">
+        <div class="card" style="margin-top: 60px; text-align: center;">
+            <h1 style="color: var(--s); margin-bottom: 5px;">KWETU PAZURI</h1>
+            <p style="margin-top: 0; color: gray;">Système de Contrôle Cloud</p>
+            <input type="text" id="login-u" placeholder="Nom d'utilisateur">
+            <input type="password" id="login-p" placeholder="Mot de passe">
+            <button onclick="login()">SE CONNECTER</button>
+            <div class="footer-tech">POWERED BY BIG BROTHER TECH</div>
+        </div>
+    </div>
+
+    <div id="pg-app" class="hidden">
+        <div class="header">
+            <span id="user-display">👤 Chargement...</span>
+            <button class="btn-logout" onclick="logout()">Déconnexion</button>
+        </div>
+
+        <div class="container">
+            <div id="tab-dash" class="tab-content">
+                <h3>📊 <span id="dash-title">Mon Résumé</span></h3>
+                <div class="dash-grid">
+                    <div class="stat-box bg-s"><small>Entrées</small><br><strong id="total-r">0</strong></div>
+                    <div class="stat-box bg-d"><small>Sorties</small><br><strong id="total-d">0</strong></div>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <small>Solde Actuel (CDF)</small>
+                    <h2 id="total-solde" style="color: var(--s); margin: 5px 0; font-size: 28px;">0</h2>
+                </div>
+                <h4 id="hist-title">Mon Historique Local</h4>
+                <div id="history-list"></div>
+            </div>
+
+            <div id="tab-saisie" class="tab-content hidden">
+                <div class="card">
+                    <h3>📝 Nouvelle Opération</h3>
+                    <select id="t-type"><option value="revenu">Revenu (+)</option><option value="depense">Dépense (-)</option></select>
+                    <input type="number" id="t-montant" placeholder="Montant CDF" inputmode="numeric">
+                    <input type="text" id="t-motif" placeholder="Motif (ex: Coiffure client X)">
+                    <button id="btn-cloud" onclick="envoiCloud()">SYNCHRONISER GMAIL</button>
+                </div>
+            </div>
+
+            <div id="tab-users" class="tab-content hidden">
+                <div class="card">
+                    <h3 style="color:var(--d)">👥 GESTION DES UTILISATEURS</h3>
+                    <h4>Ajouter un Agent</h4>
+                    <input type="text" id="add-u" placeholder="Nom">
+                    <input type="text" id="add-p" placeholder="Mot de passe">
+                    <select id="add-r">
+                        <option value="Caissier">Caissier</option>
+                        <option value="Agent">Agent</option>
+                        <option value="Edition">Edition</option>
+                        <option value="Photographe">Photographe</option>
+                        <option value="Coiffeur">Coiffeur</option>
+                        <option value="Chargeur">Chargeur</option>
+                    </select>
+                    <button onclick="ajouterAgent()">CRÉER L'AGENT</button>
+                    <hr>
+                    <h4>Supprimer un compte</h4>
+                    <select id="agent-list"></select>
+                    <button onclick="supprimerAgent()" style="background:var(--d)">SUPPRIMER DÉFINITIVEMENT</button>
+                </div>
+            </div>
+
+            <div id="tab-fun" class="tab-content hidden">
+                <div class="card">
+                    <h3>🎭 Divertissement & Infos</h3>
+                    <div id="annonces-area"></div>
+                    <div id="admin-order-zone" class="hidden">
+                        <hr>
+                        <h4>📢 Ordre de la Direction</h4>
+                        <input type="text" id="msg-input" placeholder="Écrire un message...">
+                        <button onclick="publier()">DIFFUSER</button>
+                    </div>
+                    <hr>
+                    <h4>🙏 Remerciements</h4>
+                    <p style="font-size: 13px; color: gray;">Merci pour votre travail acharné chez Kwetu Pazuri.</p>
+                </div>
+            </div>
+
+            <div id="tab-settings" class="tab-content hidden">
+                <div class="card">
+                    <h3>⚙️ Paramètres</h3>
+                    <button onclick="toggleTheme()" style="background:#34495e">🌓 Mode Sombre / Clair</button>
+                    <hr>
+                    <input type="password" id="my-new-p" placeholder="Nouveau mot de passe">
+                    <button onclick="updatePass()">Changer mon mot de passe</button>
+                    <hr>
+                    <button onclick="window.open('https://wa.me/243808942209')" style="background:#25D366">💬 CONTACTER L'ADMIN</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav">
+            <div class="nav-item active" id="n-dash" onclick="show('tab-dash', 'n-dash')">🏠<br>Dash</div>
+            <div class="nav-item" id="n-saisie" onclick="show('tab-saisie', 'n-saisie')">➕<br>Saisie</div>
+            <div class="nav-item hidden" id="n-users" onclick="show('tab-users', 'n-users')">👥<br>Gestion</div>
+            <div class="nav-item" id="n-fun" onclick="show('tab-fun', 'n-fun')">🎭<br>Divert.</div>
+            <div class="nav-item" id="n-sett" onclick="show('tab-settings', 'n-sett')">⚙️<br>Param</div>
+        </div>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbz0PRia5V6U_ZD7qDeS81cnNAdGkRjByqXVQJDvIOXR33EN9FG9-inUowdfONOM99nTuw/exec";
+        
+        let user = null;
+        let db_u = JSON.parse(localStorage.getItem('k_users')) || {"admin": {p:"admin123", r:"admin", b:"ADMIN"}};
+        let logs = JSON.parse(localStorage.getItem('k_logs')) || [];
+        let annonces = JSON.parse(localStorage.getItem('k_annonces')) || ["Bienvenue sur le système Kwetu !"];
+
+        function login() {
+            let uInput = document.getElementById('login-u').value.toLowerCase().trim();
+            let pInput = document.getElementById('login-p').value.trim();
+            
+            if(db_u[uInput] && db_u[uInput].p === pInput) {
+                user = { name: uInput, ...db_u[uInput] };
+                document.getElementById('pg-login').classList.add('hidden');
+                document.getElementById('pg-app').classList.remove('hidden');
+                document.getElementById('user-display').innerText = "👤 " + uInput.toUpperCase() + " (" + user.b + ")";
+                
+                if(user.r === 'admin') {
+                    document.getElementById('n-users').classList.remove('hidden');
+                    document.getElementById('admin-order-zone').classList.remove('hidden');
+                    document.getElementById('dash-title').innerText = "Résumé Global Admin";
+                } else {
+                    document.getElementById('n-users').classList.add('hidden');
+                    document.getElementById('admin-order-zone').classList.add('hidden');
+                    document.getElementById('dash-title').innerText = "Mon Résumé";
+                }
+                updateUI();
+            } else { alert("Identifiants incorrects"); }
+        }
+
+        function logout() {
+            if(confirm("Se déconnecter de Kwetu Control ?")) {
+                user = null;
+                document.getElementById('login-u').value = "";
+                document.getElementById('login-p').value = "";
+                document.getElementById('pg-app').classList.add('hidden');
+                document.getElementById('pg-login').classList.remove('hidden');
+                show('tab-dash', 'n-dash');
+            }
+        }
+
+        async function envoiCloud() {
+            let m = document.getElementById('t-montant').value;
+            let mot = document.getElementById('t-motif').value;
+            let typ = document.getElementById('t-type').value;
+            if(!m || !mot) return alert("Veuillez remplir le montant et le motif.");
+            document.getElementById('btn-cloud').innerText = "⏳ Envoi en cours...";
+            try {
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors',
+                    body: JSON.stringify({ user: user.name, type: typ, montant: m, motif: mot, branch: user.b })
+                });
+                logs.unshift({ u: user.name, t: typ, m: m, mot: mot, d: new Date().toLocaleString() });
+                localStorage.setItem('k_logs', JSON.stringify(logs));
+                document.getElementById('t-montant').value = "";
+                document.getElementById('t-motif').value = "";
+                alert("✅ Succès : Synchronisé avec le Cloud !");
+                updateUI();
+                show('tab-dash', 'n-dash');
+            } catch(e) { alert("Erreur réseau. Vérifiez votre connexion."); }
+            document.getElementById('btn-cloud').innerText = "SYNCHRONISER GMAIL";
+        }
+
+        function updateUI() {
+            let r=0, d=0;
+            let vLogs = (user.r === 'admin') ? logs : logs.filter(l => l.u === user.name);
+            vLogs.forEach(l => { if(l.t === 'revenu') r+=parseFloat(l.m); else d+=parseFloat(l.m); });
+            document.getElementById('total-solde').innerText = (r-d).toLocaleString() + " CDF";
+            document.getElementById('total-r').innerText = r.toLocaleString();
+            document.getElementById('total-d').innerText = d.toLocaleString();
+            document.getElementById('history-list').innerHTML = vLogs.slice(0,20).map(l => `
+                <div style="border-bottom:1px solid #eee; padding:10px 0; font-size:12px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span><b>${l.t==='revenu'?'➕':'➖'}</b> ${parseFloat(l.m).toLocaleString()} CDF</span>
+                        <small style="color:gray">${l.d.split(' ')[1]}</small>
+                    </div>
+                    <div style="color:gray; font-size:11px;">${l.mot} ${user.r==='admin'?'| Par: '+l.u:''}</div>
+                </div>`).join('') || "<p style='text-align:center; color:gray;'>Aucune opération enregistrée.</p>";
+            document.getElementById('annonces-area').innerHTML = annonces.map(a => `<div class="annonce-msg">📢 ${a}</div>`).join('');
+            if(user.r === 'admin') loadAgentList();
+        }
+
+        function ajouterAgent() {
+            let n = document.getElementById('add-u').value.toLowerCase().trim();
+            let p = document.getElementById('add-p').value.trim();
+            let b = document.getElementById('add-r').value;
+            if(!n || !p) return alert("Nom et MDP requis !");
+            db_u[n] = {p: p, r: "user", b: b};
+            localStorage.setItem('k_users', JSON.stringify(db_u));
+            document.getElementById('add-u').value = "";
+            document.getElementById('add-p').value = "";
+            loadAgentList();
+            alert("Agent " + n + " ajouté avec succès !");
+        }
+
+        function supprimerAgent() {
+            let t = document.getElementById('agent-list').value;
+            if(t === 'admin') return alert("Impossible de supprimer l'administrateur.");
+            if(confirm("Supprimer l'agent " + t + " ?")) {
+                delete db_u[t];
+                localStorage.setItem('k_users', JSON.stringify(db_u));
+                loadAgentList();
+            }
+        }
+
+        function loadAgentList() {
+            document.getElementById('agent-list').innerHTML = Object.keys(db_u).filter(x => x !== 'admin').map(u => `<option value="${u}">${u} (${db_u[u].b})</option>`).join('');
+        }
+
+        function publier() {
+            let m = document.getElementById('msg-input').value;
+            if(!m) return;
+            annonces.unshift(m);
+            localStorage.setItem('k_annonces', JSON.stringify(annonces.slice(0,3)));
+            document.getElementById('msg-input').value = "";
+            updateUI();
+        }
+
+        function updatePass() {
+            let p = document.getElementById('my-new-p').value;
+            if(p) { db_u[user.name].p = p; localStorage.setItem('k_users', JSON.stringify(db_u)); alert("Mot de passe mis à jour !"); document.getElementById('my-new-p').value = ""; }
+        }
+
+        function toggleTheme() { document.body.classList.toggle('dark'); }
+
+        function show(tab, nav) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tab).classList.remove('hidden');
+            document.getElementById(nav).classList.add('active');
+        }
+    </script>
+</body>
+</html>
