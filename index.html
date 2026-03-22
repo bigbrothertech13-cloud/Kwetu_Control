@@ -19,7 +19,7 @@
         .nav-item { flex: 1; padding: 12px; text-align: center; font-size: 10px; color: gray; cursor: pointer; }
         .active { color: var(--s); font-weight: bold; border-top: 3px solid var(--s); }
         .hidden { display: none !important; }
-        .sync-info { font-size: 10px; text-align: center; color: var(--s); margin-bottom: 10px; font-weight: bold; }
+        .sync-info { font-size: 12px; text-align: center; margin-bottom: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -44,7 +44,7 @@
 
         <div class="container">
             <div id="tab-dash" class="tab-content">
-                <div class="sync-info" id="sync-status">Synchro Cloud...</div>
+                <div id="sync-status" class="sync-info" style="color:orange;">Vérification Cloud...</div>
                 <div class="dash-grid">
                     <div class="stat-box" style="background:var(--s)"><small>Entrées</small><br><strong id="total-r">0</strong></div>
                     <div class="stat-box" style="background:var(--d)"><small>Sorties</small><br><strong id="total-d">0</strong></div>
@@ -91,18 +91,24 @@
     </div>
 
     <script>
-const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyQvyqT-gedo0vu2SSnuwPjVGVAmz_XjJJ-0zCT4dKzzM5M5cMmO1NnLmHalBahY3iQTQ/exec";
+        // TON URL DE DÉPLOIEMENT MISE À JOUR
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyQvyqT-gedo0vu2SSnuwPjVGVAmz_XjJJ-0zCT4dKzzM5M5cMmO1NnLmHalBahY3iQTQ/exec";
+        
+        let user = null;
+        let db_cloud = { users: {}, logs: [] };
 
-
-        // 1. SYNCHRONISATION TOTALE
+        // 1. SYNCHRONISATION
         async function syncGlobal() {
+            const statusBox = document.getElementById('sync-status');
             try {
                 const res = await fetch(CLOUD_URL);
                 db_cloud = await res.json();
-                document.getElementById('sync-status').innerText = "✅ Cloud Synchro : " + new Date().toLocaleTimeString();
+                statusBox.innerText = "✅ Cloud Synchro : " + new Date().toLocaleTimeString();
+                statusBox.style.color = "var(--s)";
                 if(user) updateUI();
             } catch(e) {
-                document.getElementById('sync-status').innerText = "❌ Erreur de Liaison";
+                statusBox.innerText = "❌ Erreur de Liaison";
+                statusBox.style.color = "var(--d)";
             }
         }
 
@@ -111,7 +117,7 @@ const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyQvyqT-gedo0vu2SSnuw
             const u = document.getElementById('login-u').value.toLowerCase().trim();
             const p = document.getElementById('login-p').value.trim();
             
-            // Secours Admin Local
+            // Secours Admin Local si le Cloud est vide au début
             if (u === "admin" && p === "admin123") {
                 enterApp({name: "admin", r: "admin"});
                 return;
@@ -120,7 +126,7 @@ const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyQvyqT-gedo0vu2SSnuw
             if(db_cloud.users[u] && db_cloud.users[u].p === p) {
                 enterApp({ name: u, ...db_cloud.users[u] });
             } else { 
-                alert("Utilisateur non reconnu sur le serveur.");
+                alert("Utilisateur non reconnu. Cliquez sur 🔄 SYNC ou vérifiez vos accès.");
             }
         }
 
@@ -147,15 +153,15 @@ const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyQvyqT-gedo0vu2SSnuw
                 body: JSON.stringify({ action: "log", user: user.name, type: typ, montant: m, motif: mot, branch: user.r }) 
             });
             
+            alert("✅ Données envoyées !");
             document.getElementById('t-montant').value = "";
             document.getElementById('t-motif').value = "";
             document.getElementById('btn-send').innerText = "ENVOYER AU CLOUD";
-            alert("✅ Données enregistrées dans Google Sheets !");
             syncGlobal();
             show('tab-dash', 'n-dash');
         }
 
-        // 4. CREATION AGENT
+        // 4. CREATION AGENT (ADMIN UNIQUEMENT)
         async function ajouterAgent() {
             const n = document.getElementById('add-u').value.toLowerCase().trim();
             const p = document.getElementById('add-p').value.trim();
@@ -168,17 +174,18 @@ const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyQvyqT-gedo0vu2SSnuw
                 body: JSON.stringify({ action: "addUser", u: n, p: p, r: "user", b: b }) 
             });
             
-            alert("✅ Agent créé sur le Cloud !");
+            alert("✅ Agent créé !");
             document.getElementById('add-u').value = "";
             document.getElementById('add-p').value = "";
             syncGlobal();
         }
 
+        // 5. MISE À JOUR DE L'AFFICHAGE
         function updateUI() {
             let r=0, d=0;
             let list = db_cloud.logs || [];
             
-            // L'agent ne voit que son travail, l'admin voit tout
+            // Si pas admin, on ne voit que ses propres transactions
             if(user && user.r !== 'admin') {
                 list = list.filter(l => l.u === user.name);
             }
@@ -192,7 +199,7 @@ const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyQvyqT-gedo0vu2SSnuw
             document.getElementById('total-r').innerText = r.toLocaleString();
             document.getElementById('total-d').innerText = d.toLocaleString();
             
-            document.getElementById('history-list').innerHTML = list.slice(0,25).map(l => `
+            document.getElementById('history-list').innerHTML = list.slice(0,30).map(l => `
                 <div style="border-bottom:1px solid #eee; padding:10px 0; font-size:12px;">
                     <div style="display:flex; justify-content:space-between;">
                         <span><b>${l.u.toUpperCase()}</b>: ${l.t==='revenu'?'➕':'➖'} ${parseFloat(l.m).toLocaleString()}</span>
@@ -211,6 +218,7 @@ const CLOUD_URL = "https://script.google.com/macros/s/AKfycbyQvyqT-gedo0vu2SSnuw
 
         function logout() { if(confirm("Se déconnecter ?")) location.reload(); }
         
+        // Synchro automatique au démarrage
         window.onload = syncGlobal;
     </script>
 </body>
